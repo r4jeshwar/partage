@@ -15,6 +15,7 @@ var conf struct {
 	filepath string
 	rootdir  string
 	baseuri  string
+	filectx  string
 	maxsize  int64
 }
 
@@ -122,7 +123,7 @@ func parse(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		resp := conf.baseuri + "/" + filepath.Base(tmp.Name())
+		resp := conf.baseuri + conf.filectx + filepath.Base(tmp.Name())
 		w.Write([]byte(resp))
 
 	case "GET":
@@ -150,7 +151,9 @@ func main() {
 	conf.filepath = "/tmp"
 	conf.rootdir = "./static"
 	conf.baseuri = "http://192.168.0.3:8080"
+	conf.filectx = "/f/"
 
 	http.HandleFunc("/", parse)
+	http.Handle(conf.filectx, http.StripPrefix(conf.filectx, http.FileServer(http.Dir(conf.filepath))))
 	http.ListenAndServe("0.0.0.0:8080", nil)
 }
