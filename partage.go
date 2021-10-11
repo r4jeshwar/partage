@@ -96,8 +96,6 @@ func servefile(f *os.File, w http.ResponseWriter) {
 
 func parse(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Printf("%s %s\n", r.Method, r.URL.Path)
-
 	// Max 15 Gb uploads
 	if r.ContentLength > conf.maxsize {
 		w.WriteHeader(http.StatusRequestEntityTooLarge)
