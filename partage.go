@@ -92,13 +92,49 @@ func servefile(f *os.File, w http.ResponseWriter) {
 	}
 }
 
-func parse(w http.ResponseWriter, r *http.Request) {
-
+func uploaderPut(w http.ResponseWriter, r *http.Request) {
 	// Max 15 Gb uploads
 	if r.ContentLength > conf.maxsize {
 		w.WriteHeader(http.StatusRequestEntityTooLarge)
 		w.Write([]byte("File is too big"))
 	}
+
+	tmp, _ := ioutil.TempFile(conf.filepath, "*"+path.Ext(r.URL.Path))
+	f, err := os.Create(tmp.Name())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer f.Close()
+
+	if writefile(f, r.Body, r.ContentLength) < 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	resp := conf.baseuri + conf.filectx + filepath.Base(tmp.Name()) + "\r\n"
+	w.Write([]byte(resp))
+}
+
+func uploaderGet(w http.ResponseWriter, r *http.Request) {
+	// r.URL.Path is sanitized regarding "." and ".."
+	filename := r.URL.Path
+	if r.URL.Path == "/" {
+		filename = "/index.html"
+	}
+
+	f, err := os.Open(conf.rootdir + filename)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Println(err)
+		return
+	}
+	defer f.Close()
+
+	servefile(f, w)
+}
+
+func uploader(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
@@ -107,38 +143,10 @@ func parse(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "PUT":
-		tmp, _ := ioutil.TempFile(conf.filepath, "*"+path.Ext(r.URL.Path))
-		f, err := os.Create(tmp.Name())
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		defer f.Close()
-
-		if writefile(f, r.Body, r.ContentLength) < 0 {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		resp := conf.baseuri + conf.filectx + filepath.Base(tmp.Name()) + "\r\n"
-		w.Write([]byte(resp))
+		uploaderPut(w, r)
 
 	case "GET":
-		// r.URL.Path is sanitized regarding "." and ".."
-		filename := r.URL.Path
-		if r.URL.Path == "/" {
-			filename = "/index.html"
-		}
-
-		f, err := os.Open(conf.rootdir + filename)
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Println(err)
-			return
-		}
-		defer f.Close()
-
-		servefile(f, w)
+		uploaderGet(w, r)
 	}
 }
 
@@ -150,7 +158,7 @@ func main() {
 	conf.baseuri = "http://192.168.0.3:8080"
 	conf.filectx = "/f/"
 
-	http.HandleFunc("/", parse)
+	http.HandleFunc("/", uploader)
 	http.Handle(conf.filectx, http.StripPrefix(conf.filectx, http.FileServer(http.Dir(conf.filepath))))
 	http.ListenAndServe("0.0.0.0:8080", nil)
 }
