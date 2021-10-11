@@ -32,7 +32,7 @@ func contenttype(f *os.File) string {
 	return mime
 }
 
-func writefile(f *os.File, s io.ReadCloser) int64 {
+func writefile(f *os.File, s io.ReadCloser, contentlength int64) int64 {
 	buffer := make([]byte, 4096)
 	eof := false
 	sz := int64(0)
@@ -50,8 +50,8 @@ func writefile(f *os.File, s io.ReadCloser) int64 {
 
 		/* ensure we don't write more than expected */
 		r := int64(n)
-		if sz+r > conf.maxsize {
-			r = conf.maxsize - sz
+		if sz+r > contentlength {
+			r = contentlength - sz
 			eof = true
 		}
 
@@ -119,7 +119,7 @@ func parse(w http.ResponseWriter, r *http.Request) {
 		}
 		defer f.Close()
 
-		if writefile(f, r.Body) < 0 {
+		if writefile(f, r.Body, r.ContentLength) < 0 {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
