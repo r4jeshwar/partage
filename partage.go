@@ -32,35 +32,36 @@ func contenttype(f *os.File) string {
 	return mime
 }
 
-func writefile(f *os.File, s io.ReadCloser) int {
+func writefile(f *os.File, s io.ReadCloser) int64 {
 	buffer := make([]byte, 4096)
+	eof := false
+	sz := int64(0)
 
-	var sz int
+	defer f.Sync()
 
-	for {
+	for !eof {
 		n, err := s.Read(buffer)
-
-		if err == io.EOF {
-			n, err := f.Write(buffer[:n])
-			if err != nil {
-				fmt.Println(err)
-			}
-			sz += n
-			break
-		}
-		if err != nil {
+		if err != nil && err != io.EOF {
 			fmt.Println(err)
 			return -1
+		} else if err == io.EOF {
+			eof = true
 		}
 
-		n, err = f.Write(buffer[:n])
+		/* ensure we don't write more than expected */
+		r := int64(n)
+		if sz+r > conf.maxsize {
+			r = conf.maxsize - sz
+			eof = true
+		}
+
+		_, err = f.Write(buffer[:r])
 		if err != nil {
 			fmt.Println(err)
 		}
-		sz += n
+		sz += r
 	}
 
-	f.Sync()
 	return sz
 }
 
@@ -132,7 +133,7 @@ func parse(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
 			filename = "/index.html"
 		}
-		
+
 		f, err := os.Open(conf.rootdir + filename)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
