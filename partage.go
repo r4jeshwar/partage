@@ -39,15 +39,15 @@ func writefile(f *os.File, s io.ReadCloser) int {
 	for {
 		n, err := s.Read(buffer)
 
-		if err != nil {
-			if err == io.EOF {
-				n, err := f.Write(buffer[:n])
-				if err != nil {
-					fmt.Println(err)
-				}
-				sz += n
-				break
+		if err == io.EOF {
+			n, err := f.Write(buffer[:n])
+			if err != nil {
+				fmt.Println(err)
 			}
+			sz += n
+			break
+		}
+		if err != nil {
 			fmt.Println(err)
 			return -1
 		}
@@ -145,7 +145,6 @@ func parse(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-
 	conf.bind = "0.0.0.0:8080"
 	conf.maxsize = 28 * 1024 * 1024
 	conf.filepath = "/tmp"
