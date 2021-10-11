@@ -77,8 +77,7 @@ func servefile(f *os.File, w http.ResponseWriter) {
 
 		if err != nil {
 			if err == io.EOF {
-				_, err := w.Write(buffer[:n])
-				if err != nil {
+				if _, err := w.Write(buffer[:n]); err != nil {
 					fmt.Println(err)
 				}
 				break
@@ -87,8 +86,7 @@ func servefile(f *os.File, w http.ResponseWriter) {
 			return
 		}
 
-		_, err = w.Write(buffer[:n])
-		if err != nil {
+		if _, err = w.Write(buffer[:n]); err != nil {
 			fmt.Println(err)
 		}
 	}
