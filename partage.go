@@ -135,16 +135,9 @@ func uploaderGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploader(w http.ResponseWriter, r *http.Request) {
-
-	err := r.ParseForm()
-	if err != nil {
-		fmt.Printf("%s %s: %s", r.Method, r.URL.Path, err)
-	}
-
 	switch r.Method {
 	case "PUT":
 		uploaderPut(w, r)
-
 	case "GET":
 		uploaderGet(w, r)
 	}
