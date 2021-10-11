@@ -122,7 +122,7 @@ func parse(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		resp := conf.baseuri + conf.filectx + filepath.Base(tmp.Name())
+		resp := conf.baseuri + conf.filectx + filepath.Base(tmp.Name()) + "\r\n"
 		w.Write([]byte(resp))
 
 	case "GET":
