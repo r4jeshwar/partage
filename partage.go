@@ -8,16 +8,25 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"html/template"
+
+	"github.com/dustin/go-humanize"
 )
+
+type templatedata struct {
+	Maxsize string
+}
 
 var conf struct {
 	bind     string
+	baseuri  string
 	filepath string
 	rootdir  string
-	baseuri  string
+	templatedir string
 	filectx  string
 	maxsize  int64
 }
+
 
 func contenttype(f *os.File) string {
 	buffer := make([]byte, 512)
@@ -92,6 +101,19 @@ func servefile(f *os.File, w http.ResponseWriter) {
 	}
 }
 
+func servetemplate(w http.ResponseWriter, f string, d templatedata) {
+	t, err := template.ParseFiles(conf.templatedir + "/" + f)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = t.Execute(w, d)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
 func uploaderPut(w http.ResponseWriter, r *http.Request) {
 	// Max 15 Gb uploads
 	if r.ContentLength > conf.maxsize {
@@ -119,8 +141,10 @@ func uploaderPut(w http.ResponseWriter, r *http.Request) {
 func uploaderGet(w http.ResponseWriter, r *http.Request) {
 	// r.URL.Path is sanitized regarding "." and ".."
 	filename := r.URL.Path
-	if r.URL.Path == "/" {
-		filename = "/index.html"
+	if r.URL.Path == "/" || r.URL.Path == "/index" {
+		data := templatedata{ Maxsize: humanize.IBytes(uint64(conf.maxsize))}
+		servetemplate(w, "/index.html", data)
+		return
 	}
 
 	f, err := os.Open(conf.rootdir + filename)
@@ -145,11 +169,12 @@ func uploader(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	conf.bind = "0.0.0.0:8080"
-	conf.maxsize = 28 * 1024 * 1024
+	conf.maxsize = 30064771072 // 28Gib
 	conf.filepath = "/tmp"
 	conf.rootdir = "./static"
 	conf.baseuri = "http://192.168.0.3:8080"
 	conf.filectx = "/f/"
+	conf.templatedir = "./templates"
 
 	http.HandleFunc("/", uploader)
 	http.Handle(conf.filectx, http.StripPrefix(conf.filectx, http.FileServer(http.Dir(conf.filepath))))
