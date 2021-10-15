@@ -4,7 +4,6 @@
 	<meta charset="utf-8">
 	<meta name="author" content="z3bra">
 	<meta name="viewport" content="width=device-width">
-	<link rel="icon" type="image/png" href="/favicon.png" />
 	<title>Partage</title>
 </head>
 <body>
@@ -13,9 +12,11 @@
 		Use the box below to upload and share files. File size is
 		limited to {{.Maxsize}}.
 	</p>
-	<form>
+	<form enctype="multipart/form-data" method="post">
 		<label for="uck">Select file(s) to share</label>
-		<input id="uck" type="file" multiple=true/>
+		<input id="uck" name="uck" type="file" multiple/>
+		<input id="output" name="output" type="hidden" value='html' />
 		<input type="submit" value="Upload!"/>
 	</form>
 </body>
+</html>

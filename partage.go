@@ -14,6 +14,8 @@ import (
 )
 
 type templatedata struct {
+	Links []string
+	Size string
 	Maxsize string
 }
 
@@ -115,7 +117,7 @@ func servetemplate(w http.ResponseWriter, f string, d templatedata) {
 }
 
 func uploaderPut(w http.ResponseWriter, r *http.Request) {
-	// Max 15 Gb uploads
+	/* limit upload size */
 	if r.ContentLength > conf.maxsize {
 		w.WriteHeader(http.StatusRequestEntityTooLarge)
 		w.Write([]byte("File is too big"))
@@ -134,8 +136,55 @@ func uploaderPut(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := conf.baseuri + conf.filectx + filepath.Base(tmp.Name()) + "\r\n"
+	resp := conf.baseuri + conf.filectx + filepath.Base(tmp.Name())
 	w.Write([]byte(resp))
+}
+
+func uploaderPost(w http.ResponseWriter, r *http.Request) {
+	/* read 32Mb at a time */
+	r.ParseMultipartForm(32 << 20)
+
+	links := []string{}
+	for _, h := range r.MultipartForm.File["uck"] {
+		if h.Size > conf.maxsize {
+			w.WriteHeader(http.StatusRequestEntityTooLarge)
+			w.Write([]byte("File is too big"))
+			return
+		}
+
+		post, err := h.Open()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer post.Close()
+
+		tmp, _ := ioutil.TempFile(conf.filepath, "*"+path.Ext(h.Filename))
+		f, err := os.Create(tmp.Name())
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer f.Close()
+
+		if writefile(f, post, h.Size) < 0 {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		link := conf.baseuri + conf.filectx + filepath.Base(tmp.Name())
+		links = append(links, link)
+	}
+
+	if (r.PostFormValue("output") == "html") {
+		data := templatedata{ Links: links }
+		servetemplate(w, "/upload.html", data)
+		return
+	} else {
+		for _, link := range links {
+			w.Write([]byte(link + "\r\n"))
+		}
+	}
 }
 
 func uploaderGet(w http.ResponseWriter, r *http.Request) {
@@ -160,6 +209,8 @@ func uploaderGet(w http.ResponseWriter, r *http.Request) {
 
 func uploader(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
+	case "POST":
+		uploaderPost(w, r)
 	case "PUT":
 		uploaderPut(w, r)
 	case "GET":
