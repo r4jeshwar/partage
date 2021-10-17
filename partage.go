@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"flag"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -219,13 +220,15 @@ func uploader(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	conf.bind = "0.0.0.0:8080"
-	conf.maxsize = 30064771072 // 28Gib
-	conf.filepath = "/tmp"
-	conf.rootdir = "./static"
-	conf.baseuri = "http://192.168.0.3:8080"
-	conf.filectx = "/f/"
-	conf.templatedir = "./templates"
+	flag.StringVar(&conf.bind,        "l", "0.0.0.0:8080", "Address to bind to (default: 0.0.0.0:8080)")
+	flag.StringVar(&conf.baseuri,     "b", "http://127.0.0.1:8080", "Base URI to use for links (default: http://127.0.0.1:8080)")
+	flag.StringVar(&conf.filepath,    "f", "/tmp", "Path to save files to (default: /tmp)")
+	flag.StringVar(&conf.filectx,     "c", "/f/", "Context to serve files from (default: /f/)")
+	flag.StringVar(&conf.rootdir,     "r", "./static", "Root directory (default: ./static)")
+	flag.StringVar(&conf.templatedir, "t", "./templates", "Templates directory (default: ./templates)")
+	flag.Int64Var(&conf.maxsize,      "s", 30064771072, "Maximum file size (default: 28Gib)")
+
+	flag.Parse()
 
 	http.HandleFunc("/", uploader)
 	http.Handle(conf.filectx, http.StripPrefix(conf.filectx, http.FileServer(http.Dir(conf.filepath))))
