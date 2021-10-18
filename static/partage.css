@@ -1,0 +1,55 @@
+body {
+	padding: 5%;
+	margin: auto;
+	max-width: 540px;
+	text-align: center;
+	font-family: serif;
+	font-size: 1.5rem;
+	background-color: #eeeeee;
+	color: #222222;
+}
+
+header {
+	display: flex;
+	align-items: center;
+	align-content: center;
+	justify-content: center;
+	max-height: 30vh;
+	gap: 8px;
+}
+
+
+h1       { font-size: 3rem; }
+img#logo { height: 4rem; }
+ul       { list-style: none; padding: 0; }
+
+/* font attributes are not inherited by default */
+input, input::file-selector-button {
+	text-align: inherit;
+	font-family: inherit;
+	font-size: inherit;
+}
+
+
+@media (orientation: portrait) {
+	header   { flex-direction: column; max-height: 50vh; }
+	h1       { font-size: 3rem; }
+	img#logo { height: 30vh; }
+}
+
+@media (prefers-color-scheme: light) {
+	a { color: black; }
+	body {
+		color: #222222;
+		background-color: #eeeeee;
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	a { color: white; }
+	body {
+		color: #eeeeee;
+		background-color: #222222;
+	}
+}
+

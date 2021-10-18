@@ -4,14 +4,15 @@
 	<meta charset="utf-8">
 	<meta name="author" content="z3bra">
 	<meta name="viewport" content="width=device-width">
+	<link rel="stylesheet" type="text/css" href="/partage.css" />
+	<link rel="icon" type="image/png" href="/favicon.ico" />
 	<title>Partage</title>
 </head>
 <body>
-	<h1>File uploaded!</h1>
-	<p>
-		Your files have been uploaded. Access and download it from the
-		following links:
-	</p>
+	<header>
+		<h1>partage</h1>
+		<img id="logo" src="/partage.png" />
+	</header>
 	<ul>
 	{{range .Links}}
 	  <li><a href="{{.}}">{{.}}</a></li>
