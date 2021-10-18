@@ -164,7 +164,7 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 func uploaderGet(w http.ResponseWriter, r *http.Request) {
 	// r.URL.Path is sanitized regarding "." and ".."
 	filename := r.URL.Path
-	if r.URL.Path == "/" || r.URL.Path == "/index" {
+	if r.URL.Path == "/" || r.URL.Path == "/index.html" {
 		data := templatedata{ Maxsize: humanize.IBytes(uint64(conf.maxsize))}
 		servetemplate(w, "/index.html", data)
 		return
