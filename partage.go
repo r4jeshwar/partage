@@ -77,33 +77,6 @@ func writefile(f *os.File, s io.ReadCloser, contentlength int64) int64 {
 	return sz
 }
 
-func servefile(f *os.File, w http.ResponseWriter) {
-	buffer := make([]byte, 4096)
-
-	mime := contenttype(f)
-	w.Header().Set("Content-Type", mime)
-
-	f.Seek(0, 0)
-	for {
-		n, err := f.Read(buffer)
-
-		if err != nil {
-			if err == io.EOF {
-				if _, err := w.Write(buffer[:n]); err != nil {
-					fmt.Println(err)
-				}
-				break
-			}
-			fmt.Println(err)
-			return
-		}
-
-		if _, err = w.Write(buffer[:n]); err != nil {
-			fmt.Println(err)
-		}
-	}
-}
-
 func servetemplate(w http.ResponseWriter, f string, d templatedata) {
 	t, err := template.ParseFiles(conf.templatedir + "/" + f)
 	if err != nil {
@@ -197,15 +170,7 @@ func uploaderGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	f, err := os.Open(conf.rootdir + filename)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Println(err)
-		return
-	}
-	defer f.Close()
-
-	servefile(f, w)
+	http.ServeFile(w, r, conf.rootdir + filename)
 }
 
 func uploader(w http.ResponseWriter, r *http.Request) {
