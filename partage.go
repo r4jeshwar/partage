@@ -44,7 +44,7 @@ func contenttype(f *os.File) string {
 	return mime
 }
 
-func writefile(f *os.File, s io.ReadCloser, contentlength int64) int64 {
+func writefile(f *os.File, s io.ReadCloser, contentlength int64) error {
 	buffer := make([]byte, 4096)
 	eof := false
 	sz := int64(0)
@@ -54,8 +54,7 @@ func writefile(f *os.File, s io.ReadCloser, contentlength int64) int64 {
 	for !eof {
 		n, err := s.Read(buffer)
 		if err != nil && err != io.EOF {
-			fmt.Println(err)
-			return -1
+			return err
 		} else if err == io.EOF {
 			eof = true
 		}
@@ -69,12 +68,12 @@ func writefile(f *os.File, s io.ReadCloser, contentlength int64) int64 {
 
 		_, err = f.Write(buffer[:r])
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 		sz += r
 	}
 
-	return sz
+	return nil
 }
 
 func servetemplate(w http.ResponseWriter, f string, d templatedata) {
@@ -105,8 +104,9 @@ func uploaderPut(w http.ResponseWriter, r *http.Request) {
 	}
 	defer f.Close()
 
-	if writefile(f, r.Body, r.ContentLength) < 0 {
+	if err = writefile(f, r.Body, r.ContentLength); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		defer os.Remove(tmp.Name())
 		return
 	}
 
@@ -141,8 +141,9 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 		}
 		defer f.Close()
 
-		if writefile(f, post, h.Size) < 0 {
+		if err = writefile(f, post, h.Size); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			defer os.Remove(tmp.Name())
 			return
 		}
 
