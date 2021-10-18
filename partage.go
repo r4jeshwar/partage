@@ -7,9 +7,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 	"path"
 	"path/filepath"
 	"html/template"
+	"encoding/json"
 
 	"github.com/dustin/go-humanize"
 )
@@ -20,14 +22,23 @@ type templatedata struct {
 	Maxsize string
 }
 
+type metadata struct {
+	Filename string
+	Size int64
+	Expiry int64
+}
+
 var conf struct {
 	bind     string
 	baseuri  string
 	filepath string
+	metapath string
 	rootdir  string
 	templatedir string
 	filectx  string
+	metactx  string
 	maxsize  int64
+	expiry   int64
 }
 
 
@@ -76,6 +87,35 @@ func writefile(f *os.File, s io.ReadCloser, contentlength int64) error {
 	return nil
 }
 
+func writemeta(filename string, expiry int64) error {
+
+	f, _ := os.Open(filename)
+	stat, _ := f.Stat()
+	size := stat.Size()
+	f.Close()
+
+	meta := metadata{
+		Filename: filepath.Base(filename),
+		Size: size,
+		Expiry: time.Now().Unix() + expiry,
+	}
+
+	f, err := os.Create(conf.metapath + "/" + meta.Filename + ".json")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	j, err := json.Marshal(meta)
+	if err != nil {
+		return err
+	}
+
+	_, err = f.Write(j)
+
+	return err
+}
+
 func servetemplate(w http.ResponseWriter, f string, d templatedata) {
 	t, err := template.ParseFiles(conf.templatedir + "/" + f)
 	if err != nil {
@@ -109,6 +149,7 @@ func uploaderPut(w http.ResponseWriter, r *http.Request) {
 		defer os.Remove(tmp.Name())
 		return
 	}
+	writemeta(tmp.Name(), conf.expiry)
 
 	resp := conf.baseuri + conf.filectx + filepath.Base(tmp.Name())
 	w.Write([]byte(resp))
@@ -147,7 +188,11 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		link := conf.baseuri + conf.filectx + filepath.Base(tmp.Name())
+		writemeta(tmp.Name(), conf.expiry)
+
+
+		//link := conf.baseuri + conf.filectx + filepath.Base(tmp.Name())
+		link := conf.baseuri + conf.metactx + filepath.Base(tmp.Name()) + ".json"
 		links = append(links, link)
 	}
 
@@ -188,15 +233,19 @@ func uploader(w http.ResponseWriter, r *http.Request) {
 func main() {
 	flag.StringVar(&conf.bind,        "l", "0.0.0.0:8080", "Address to bind to (default: 0.0.0.0:8080)")
 	flag.StringVar(&conf.baseuri,     "b", "http://127.0.0.1:8080", "Base URI to use for links (default: http://127.0.0.1:8080)")
-	flag.StringVar(&conf.filepath,    "f", "/tmp", "Path to save files to (default: /tmp)")
+	flag.StringVar(&conf.filepath,    "f", "./files", "Path to save files to (default: ./files)")
+	flag.StringVar(&conf.metapath,    "m", "./meta", "Path to save metadata to (default: ./meta)")
 	flag.StringVar(&conf.filectx,     "c", "/f/", "Context to serve files from (default: /f/)")
+	flag.StringVar(&conf.metactx,     "d", "/m/", "Context to serve metadata from (default: /m/)")
 	flag.StringVar(&conf.rootdir,     "r", "./static", "Root directory (default: ./static)")
 	flag.StringVar(&conf.templatedir, "t", "./templates", "Templates directory (default: ./templates)")
 	flag.Int64Var(&conf.maxsize,      "s", 30064771072, "Maximum file size (default: 28Gib)")
+	flag.Int64Var(&conf.expiry,       "e", 86400, "Link expiration time (default: 24h)")
 
 	flag.Parse()
 
 	http.HandleFunc("/", uploader)
 	http.Handle(conf.filectx, http.StripPrefix(conf.filectx, http.FileServer(http.Dir(conf.filepath))))
+	http.Handle(conf.metactx, http.StripPrefix(conf.metactx, http.FileServer(http.Dir(conf.metapath))))
 	http.ListenAndServe("0.0.0.0:8080", nil)
 }
