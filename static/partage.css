@@ -11,17 +11,16 @@ body {
 
 header {
 	display: flex;
+	flex-direction: column;
+	flex-wrap: wrap-reverse;
 	align-items: center;
 	align-content: center;
-	justify-content: center;
-	max-height: 30vh;
-	gap: 8px;
 }
 
 
-h1       { font-size: 3rem; }
-img#logo { height: 4rem; }
-ul       { list-style: none; padding: 0; }
+img#logo { height: 100%; max-height: 30vh; }
+h1 { font-size: 4.5rem; }
+ul { list-style: none; padding: 0; }
 
 /* font attributes are not inherited by default */
 input, input::file-selector-button {
@@ -30,11 +29,16 @@ input, input::file-selector-button {
 	font-size: inherit;
 }
 
-
-@media (orientation: portrait) {
-	header   { flex-direction: column; max-height: 50vh; }
-	h1       { font-size: 3rem; }
-	img#logo { height: 30vh; }
+@media (min-aspect-ratio: 18/9) {
+	header {
+		flex-direction: row;
+	}
+	h1 { font-size: 3rem; margin-right: 10px; }
+	img#logo {
+		height: 50%;
+		max-height: 20vh;
+		order: 2;
+	}
 }
 
 @media (prefers-color-scheme: light) {
