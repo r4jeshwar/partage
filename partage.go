@@ -5,6 +5,7 @@ import (
 	"flag"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/user"
@@ -47,6 +48,8 @@ var conf struct {
 	maxsize  int64
 	expiry   int64
 }
+
+var verbose bool
 
 func writefile(f *os.File, s io.ReadCloser, contentlength int64) error {
 	buffer := make([]byte, 4096)
@@ -93,6 +96,10 @@ func writemeta(filename string, expiry int64) error {
 		Expiry: time.Now().Unix() + expiry,
 	}
 
+	if verbose {
+		log.Printf("Saving metadata for %s in %s", meta.Filename, conf.metapath + "/" + meta.Filename + ".json")
+	}
+
 	f, err := os.Create(conf.metapath + "/" + meta.Filename + ".json")
 	if err != nil {
 		return err
@@ -116,6 +123,10 @@ func servetemplate(w http.ResponseWriter, f string, d templatedata) {
 		return
 	}
 
+	if verbose {
+		log.Printf("Serving template %s", t.Name())
+	}
+
 	err = t.Execute(w, d)
 	if err != nil {
 		fmt.Println(err)
@@ -135,6 +146,10 @@ func uploaderPut(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer f.Close()
+
+	if verbose {
+		log.Printf("Writing %d bytes to %s", r.ContentLength, tmp)
+	}
 
 	if err = writefile(f, r.Body, r.ContentLength); err != nil {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
@@ -206,10 +221,18 @@ func uploaderGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if verbose {
+		log.Printf("Serving file %s", conf.rootdir + filename)
+	}
+
 	http.ServeFile(w, r, conf.rootdir + filename)
 }
 
 func uploader(w http.ResponseWriter, r *http.Request) {
+	if verbose {
+		log.Printf("%s: <%s> %s %s %s", r.Host, r.RemoteAddr, r.Method, r.RequestURI, r.Proto)
+	}
+
 	switch r.Method {
 	case "POST":
 		uploaderPost(w, r)
@@ -237,7 +260,14 @@ func main() {
 
 	iniflags.Parse()
 
+	if verbose {
+		log.Printf("Applied configuration:\n%s", conf)
+	}
+
 	if (conf.chroot != "") {
+		if verbose {
+			log.Printf("Changing root to %s", conf.chroot)
+		}
 		syscall.Chroot(conf.chroot)
 	}
 
@@ -260,11 +290,20 @@ func main() {
 			gid, _ = strconv.Atoi(g.Gid)
 		}
 
+		if verbose {
+			log.Printf("Dropping privileges to %s", conf.user)
+		}
+
 		syscall.Setuid(uid)
 		syscall.Setgid(gid)
 	}
 
 	http.HandleFunc("/", uploader)
 	http.Handle(conf.filectx, http.StripPrefix(conf.filectx, http.FileServer(http.Dir(conf.filepath))))
+
+	if verbose {
+		log.Printf("Listening on %s", conf.bind)
+	}
+
 	http.ListenAndServe(conf.bind, nil)
 }
