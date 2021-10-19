@@ -162,7 +162,7 @@ func uploaderPut(w http.ResponseWriter, r *http.Request) {
 	writemeta(tmp.Name(), conf.expiry)
 
 	resp := conf.baseuri + conf.filectx + filepath.Base(tmp.Name())
-	w.Write([]byte(resp))
+	w.Write([]byte(resp + "\r\n"))
 }
 
 func uploaderPost(w http.ResponseWriter, r *http.Request) {
