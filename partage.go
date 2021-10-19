@@ -327,6 +327,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer os.Remove(conf.bind)
 	} else {
 		listener, err = net.Listen("tcp", conf.bind)
 		if err != nil {
