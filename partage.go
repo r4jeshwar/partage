@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/fcgi"
 	"os"
+	"os/signal"
 	"os/user"
 	"path"
 	"path/filepath"
@@ -327,7 +328,16 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		/* Ensure unix socket is removed on exit */
 		defer os.Remove(conf.bind)
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			_ = <-sigs
+			os.Remove(conf.bind)
+			os.Exit(0)
+		}()
 	} else {
 		listener, err = net.Listen("tcp", conf.bind)
 		if err != nil {
