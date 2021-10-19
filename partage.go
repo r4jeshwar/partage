@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/user"
@@ -286,7 +287,9 @@ func usergroupids(username string, groupname string) (int, int, error) {
 }
 
 func main() {
+	var err error
 	var configfile string
+	var listener net.Listener
 
 	/* default values */
 	conf.bind = "0.0.0.0:8080"
@@ -318,6 +321,18 @@ func main() {
 		syscall.Chroot(conf.chroot)
 	}
 
+	if conf.bind[0] == '/' {
+		listener, err = net.Listen("unix", conf.bind)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		listener, err = net.Listen("tcp", conf.bind)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	if conf.user != "" {
 		if verbose {
 			log.Printf("Dropping privileges to %s", conf.user)
@@ -326,6 +341,11 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		if listener.Addr().Network() == "unix" {
+			os.Chown(conf.bind, uid, gid)
+		}
+
 		syscall.Setuid(uid)
 		syscall.Setgid(gid)
 	}
@@ -337,5 +357,5 @@ func main() {
 		log.Printf("Listening on %s", conf.bind)
 	}
 
-	http.ListenAndServe(conf.bind, nil)
+	http.Serve(listener, nil)
 }
