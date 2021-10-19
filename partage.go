@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 	"path"
+	"syscall"
 	"path/filepath"
 	"html/template"
 	"encoding/json"
@@ -35,6 +36,7 @@ var conf struct {
 	filepath string
 	metapath string
 	rootdir  string
+	chroot   string
 	templatedir string
 	filectx  string
 	metactx  string
@@ -222,11 +224,16 @@ func main() {
 	flag.StringVar(&conf.filectx,     "filectx",     "/f/", "Context to serve files from (default: /f/)")
 	flag.StringVar(&conf.metactx,     "metactx",     "/m/", "Context to serve metadata from (default: /m/)")
 	flag.StringVar(&conf.rootdir,     "rootdir",     "./static", "Root directory (default: ./static)")
+	flag.StringVar(&conf.chroot,      "chroot",      "", "Directory to chroot into upon starting (default: no chroot)")
 	flag.StringVar(&conf.templatedir, "templatedir", "./templates", "Templates directory (default: ./templates)")
 	flag.Int64Var(&conf.maxsize,      "maxsize",     30064771072, "Maximum file size (default: 28Gib)")
 	flag.Int64Var(&conf.expiry,       "expiry",      86400, "Link expiration time (default: 24h)")
 
 	iniflags.Parse()
+
+	if (conf.chroot != "") {
+		syscall.Chroot(conf.chroot)
+	}
 
 	http.HandleFunc("/", uploader)
 	http.Handle(conf.filectx, http.StripPrefix(conf.filectx, http.FileServer(http.Dir(conf.filepath))))
