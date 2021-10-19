@@ -42,19 +42,6 @@ var conf struct {
 }
 
 
-func contenttype(f *os.File) string {
-	buffer := make([]byte, 512)
-
-	_, err := f.Read(buffer)
-	if err != nil {
-		return ""
-	}
-
-	mime := http.DetectContentType(buffer)
-
-	return mime
-}
-
 func writefile(f *os.File, s io.ReadCloser, contentlength int64) error {
 	buffer := make([]byte, 4096)
 	eof := false
