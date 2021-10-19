@@ -105,7 +105,7 @@ func writemeta(filename string, expiry int64) error {
 func servetemplate(w http.ResponseWriter, f string, d templatedata) {
 	t, err := template.ParseFiles(conf.templatedir + "/" + f)
 	if err != nil {
-		http.Error(w, err, http.StatusInternalServerError)
+		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 
@@ -130,7 +130,7 @@ func uploaderPut(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 
 	if err = writefile(f, r.Body, r.ContentLength); err != nil {
-		http.Error(w, err, http.StatusInternalServerError)
+		http.Error(w, "Internal error", http.StatusInternalServerError)
 		defer os.Remove(tmp.Name())
 		return
 	}
@@ -153,7 +153,7 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 
 		post, err := h.Open()
 		if err != nil {
-			http.Error(w, err, http.StatusInternalServerError)
+			http.Error(w, "Internal error", http.StatusInternalServerError)
 			return
 		}
 		defer post.Close()
@@ -161,13 +161,13 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 		tmp, _ := ioutil.TempFile(conf.filepath, "*"+path.Ext(h.Filename))
 		f, err := os.Create(tmp.Name())
 		if err != nil {
-			http.Error(w, err, http.StatusInternalServerError)
+			http.Error(w, "Internal error", http.StatusInternalServerError)
 			return
 		}
 		defer f.Close()
 
 		if err = writefile(f, post, h.Size); err != nil {
-			http.Error(w, err, http.StatusInternalServerError)
+			http.Error(w, "Internal error", http.StatusInternalServerError)
 			defer os.Remove(tmp.Name())
 			return
 		}
