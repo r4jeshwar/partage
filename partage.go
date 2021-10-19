@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 
 	"github.com/dustin/go-humanize"
+	"github.com/vharitonsky/iniflags"
 )
 
 type templatedata struct {
@@ -214,18 +215,18 @@ func uploader(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	flag.StringVar(&conf.bind,        "l", "0.0.0.0:8080", "Address to bind to (default: 0.0.0.0:8080)")
-	flag.StringVar(&conf.baseuri,     "b", "http://127.0.0.1:8080", "Base URI to use for links (default: http://127.0.0.1:8080)")
-	flag.StringVar(&conf.filepath,    "f", "./files", "Path to save files to (default: ./files)")
-	flag.StringVar(&conf.metapath,    "m", "./meta", "Path to save metadata to (default: ./meta)")
-	flag.StringVar(&conf.filectx,     "c", "/f/", "Context to serve files from (default: /f/)")
-	flag.StringVar(&conf.metactx,     "d", "/m/", "Context to serve metadata from (default: /m/)")
-	flag.StringVar(&conf.rootdir,     "r", "./static", "Root directory (default: ./static)")
-	flag.StringVar(&conf.templatedir, "t", "./templates", "Templates directory (default: ./templates)")
-	flag.Int64Var(&conf.maxsize,      "s", 30064771072, "Maximum file size (default: 28Gib)")
-	flag.Int64Var(&conf.expiry,       "e", 86400, "Link expiration time (default: 24h)")
+	flag.StringVar(&conf.bind,        "bind",        "0.0.0.0:8080", "Address to bind to (default: 0.0.0.0:8080)")
+	flag.StringVar(&conf.baseuri,     "baseuri",     "http://127.0.0.1:8080", "Base URI to use for links (default: http://127.0.0.1:8080)")
+	flag.StringVar(&conf.filepath,    "filepath",    "./files", "Path to save files to (default: ./files)")
+	flag.StringVar(&conf.metapath,    "metapath",    "./meta", "Path to save metadata to (default: ./meta)")
+	flag.StringVar(&conf.filectx,     "filectx",     "/f/", "Context to serve files from (default: /f/)")
+	flag.StringVar(&conf.metactx,     "metactx",     "/m/", "Context to serve metadata from (default: /m/)")
+	flag.StringVar(&conf.rootdir,     "rootdir",     "./static", "Root directory (default: ./static)")
+	flag.StringVar(&conf.templatedir, "templatedir", "./templates", "Templates directory (default: ./templates)")
+	flag.Int64Var(&conf.maxsize,      "maxsize",     30064771072, "Maximum file size (default: 28Gib)")
+	flag.Int64Var(&conf.expiry,       "expiry",      86400, "Link expiration time (default: 24h)")
 
-	flag.Parse()
+	iniflags.Parse()
 
 	http.HandleFunc("/", uploader)
 	http.Handle(conf.filectx, http.StripPrefix(conf.filectx, http.FileServer(http.Dir(conf.filepath))))
