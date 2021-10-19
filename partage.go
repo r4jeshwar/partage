@@ -265,10 +265,10 @@ func parseconfig(file string) error {
 	return nil
 }
 
-func dropprivilege(username string, groupname string) error {
+func usergroupids(username string, groupname string) (int, int, error) {
 	u, err := user.Lookup(username)
 	if err != nil {
-		return err
+		return -1, -1, err
 	}
 
 	uid, _ := strconv.Atoi(u.Uid)
@@ -277,15 +277,12 @@ func dropprivilege(username string, groupname string) error {
 	if conf.group != "" {
 		g, err := user.LookupGroup(groupname)
 		if err != nil {
-			return err
+			return uid, -1, err
 		}
 		gid, _ = strconv.Atoi(g.Gid)
 	}
 
-	syscall.Setuid(uid)
-	syscall.Setgid(gid)
-
-	return nil
+	return uid, gid, nil
 }
 
 func main() {
@@ -325,7 +322,12 @@ func main() {
 		if verbose {
 			log.Printf("Dropping privileges to %s", conf.user)
 		}
-		dropprivilege(conf.user, conf.group)
+		uid, gid, err := usergroupids(conf.user, conf.group)
+		if err != nil {
+			log.Fatal(err)
+		}
+		syscall.Setuid(uid)
+		syscall.Setgid(gid)
 	}
 
 	http.HandleFunc("/", uploader)
