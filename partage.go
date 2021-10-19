@@ -242,11 +242,54 @@ func uploader(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func parseconfig(file string) error {
+	cfg, err := ini.Load(file)
+	if err != nil {
+		return err
+	}
+
+	conf.bind = cfg.Section("").Key("bind").String()
+	conf.user = cfg.Section("").Key("user").String()
+	conf.group = cfg.Section("").Key("group").String()
+	conf.baseuri = cfg.Section("").Key("baseuri").String()
+	conf.filepath = cfg.Section("").Key("filepath").String()
+	conf.metapath = cfg.Section("").Key("metapath").String()
+	conf.filectx = cfg.Section("").Key("filectx").String()
+	conf.metactx = cfg.Section("").Key("metactx").String()
+	conf.rootdir = cfg.Section("").Key("rootdir").String()
+	conf.chroot = cfg.Section("").Key("chroot").String()
+	conf.tmplpath = cfg.Section("").Key("tmplpath").String()
+	conf.maxsize, _ = cfg.Section("").Key("maxsize").Int64()
+	conf.expiry, _ = cfg.Section("").Key("expiry").Int64()
+
+	return nil
+}
+
+func dropprivilege(username string, groupname string) error {
+	u, err := user.Lookup(username)
+	if err != nil {
+		return err
+	}
+
+	uid, _ := strconv.Atoi(u.Uid)
+	gid, _ := strconv.Atoi(u.Gid)
+
+	if conf.group != "" {
+		g, err := user.LookupGroup(groupname)
+		if err != nil {
+			return err
+		}
+		gid, _ = strconv.Atoi(g.Gid)
+	}
+
+	syscall.Setuid(uid)
+	syscall.Setgid(gid)
+
+	return nil
+}
+
 func main() {
-	var file string
-	flag.StringVar(&file, "f", "", "Configuration file")
-	flag.BoolVar(&verbose, "v", false, "Verbose logging")
-	flag.Parse()
+	var configfile string
 
 	/* default values */
 	conf.bind = "0.0.0.0:8080"
@@ -260,30 +303,15 @@ func main() {
 	conf.maxsize = 34359738368
 	conf.expiry = 86400
 
-	if file != "" {
+	flag.StringVar(&configfile, "f", "", "Configuration file")
+	flag.BoolVar(&verbose, "v", false, "Verbose logging")
+	flag.Parse()
+
+	if configfile != "" {
 		if verbose {
-			log.Printf("Reading configuration %s", file)
+			log.Printf("Reading configuration %s", configfile)
 		}
-
-		cfg, err := ini.Load(file)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		conf.bind = cfg.Section("").Key("bind").String()
-		conf.user = cfg.Section("").Key("user").String()
-		conf.group = cfg.Section("").Key("group").String()
-		conf.baseuri = cfg.Section("").Key("baseuri").String()
-		conf.filepath = cfg.Section("").Key("filepath").String()
-		conf.metapath = cfg.Section("").Key("metapath").String()
-		conf.filectx = cfg.Section("").Key("filectx").String()
-		conf.metactx = cfg.Section("").Key("metactx").String()
-		conf.rootdir = cfg.Section("").Key("rootdir").String()
-		conf.chroot = cfg.Section("").Key("chroot").String()
-		conf.tmplpath = cfg.Section("").Key("tmplpath").String()
-		conf.maxsize, _ = cfg.Section("").Key("maxsize").Int64()
-		conf.expiry, _ = cfg.Section("").Key("expiry").Int64()
+		parseconfig(configfile)
 	}
 
 	if conf.chroot != "" {
@@ -294,30 +322,10 @@ func main() {
 	}
 
 	if conf.user != "" {
-		u, err := user.Lookup(conf.user)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		uid, _ := strconv.Atoi(u.Uid)
-		gid, _ := strconv.Atoi(u.Gid)
-
-		if conf.group != "" {
-			g, err := user.LookupGroup(conf.group)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			gid, _ = strconv.Atoi(g.Gid)
-		}
-
 		if verbose {
 			log.Printf("Dropping privileges to %s", conf.user)
 		}
-
-		syscall.Setuid(uid)
-		syscall.Setgid(gid)
+		dropprivilege(conf.user, conf.group)
 	}
 
 	http.HandleFunc("/", uploader)
