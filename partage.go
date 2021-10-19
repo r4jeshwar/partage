@@ -229,5 +229,5 @@ func main() {
 
 	http.HandleFunc("/", uploader)
 	http.Handle(conf.filectx, http.StripPrefix(conf.filectx, http.FileServer(http.Dir(conf.filepath))))
-	http.ListenAndServe("0.0.0.0:8080", nil)
+	http.ListenAndServe(conf.bind, nil)
 }
