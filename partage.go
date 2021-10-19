@@ -18,7 +18,7 @@ import (
 	"encoding/json"
 
 	"github.com/dustin/go-humanize"
-	"github.com/vharitonsky/iniflags"
+	"gopkg.in/ini.v1"
 )
 
 type templatedata struct {
@@ -34,19 +34,19 @@ type metadata struct {
 }
 
 var conf struct {
-	bind     string
-	user     string
-	group    string
-	baseuri  string
-	filepath string
-	metapath string
-	rootdir  string
-	chroot   string
-	templatedir string
-	filectx  string
-	metactx  string
-	maxsize  int64
-	expiry   int64
+	user        string
+	group       string
+	chroot      string
+	bind        string
+	baseuri     string
+	rootdir     string
+	tmplpath    string
+	filepath    string
+	metapath    string
+	filectx     string
+	metactx     string
+	maxsize     int64
+	expiry      int64
 }
 
 var verbose bool
@@ -117,7 +117,7 @@ func writemeta(filename string, expiry int64) error {
 }
 
 func servetemplate(w http.ResponseWriter, f string, d templatedata) {
-	t, err := template.ParseFiles(conf.templatedir + "/" + f)
+	t, err := template.ParseFiles(conf.tmplpath + "/" + f)
 	if err != nil {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
@@ -244,21 +244,48 @@ func uploader(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	flag.StringVar(&conf.bind,        "bind",        "0.0.0.0:8080", "Address to bind to (default: 0.0.0.0:8080)")
-	flag.StringVar(&conf.user,        "user",        "", "User to drop privileges to on startup (default: current user)")
-	flag.StringVar(&conf.group,       "group",       "", "Group to drop privileges to on startup (default: user's group)")
-	flag.StringVar(&conf.baseuri,     "baseuri",     "http://127.0.0.1:8080", "Base URI to use for links (default: http://127.0.0.1:8080)")
-	flag.StringVar(&conf.filepath,    "filepath",    "./files", "Path to save files to (default: ./files)")
-	flag.StringVar(&conf.metapath,    "metapath",    "./meta", "Path to save metadata to (default: ./meta)")
-	flag.StringVar(&conf.filectx,     "filectx",     "/f/", "Context to serve files from (default: /f/)")
-	flag.StringVar(&conf.metactx,     "metactx",     "/m/", "Context to serve metadata from (default: /m/)")
-	flag.StringVar(&conf.rootdir,     "rootdir",     "./static", "Root directory (default: ./static)")
-	flag.StringVar(&conf.chroot,      "chroot",      "", "Directory to chroot into upon starting (default: no chroot)")
-	flag.StringVar(&conf.templatedir, "templatedir", "./templates", "Templates directory (default: ./templates)")
-	flag.Int64Var(&conf.maxsize,      "maxsize",     30064771072, "Maximum file size (default: 28Gib)")
-	flag.Int64Var(&conf.expiry,       "expiry",      86400, "Link expiration time (default: 24h)")
+	var file string
+	flag.StringVar(&file,  "f", "", "Configuration file")
+	flag.BoolVar(&verbose, "v", false, "Verbose logging")
+	flag.Parse()
 
-	iniflags.Parse()
+	/* default values */
+	conf.bind     = "0.0.0.0:8080"
+	conf.baseuri  = "http://127.0.0.1:8080"
+	conf.rootdir  = "/htdocs"
+	conf.tmplpath = "/htdocs/templates"
+	conf.filepath = "/htdocs/files"
+	conf.metapath = "/htdocs/meta"
+	conf.filectx  = "/f/"
+	conf.metactx  = "/m/"
+	conf.maxsize  = 34359738368
+	conf.expiry   = 86400
+
+	if file != "" {
+		if verbose {
+			log.Printf("Reading configuration %s", file)
+		}
+
+		cfg, err := ini.Load(file)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		conf.bind        = cfg.Section("").Key("bind").String()
+		conf.user        = cfg.Section("").Key("user").String()
+		conf.group       = cfg.Section("").Key("group").String()
+		conf.baseuri     = cfg.Section("").Key("baseuri").String()
+		conf.filepath    = cfg.Section("").Key("filepath").String()
+		conf.metapath    = cfg.Section("").Key("metapath").String()
+		conf.filectx     = cfg.Section("").Key("filectx").String()
+		conf.metactx     = cfg.Section("").Key("metactx").String()
+		conf.rootdir     = cfg.Section("").Key("rootdir").String()
+		conf.chroot      = cfg.Section("").Key("chroot").String()
+		conf.tmplpath    = cfg.Section("").Key("tmplpath").String()
+		conf.maxsize, _  = cfg.Section("").Key("maxsize").Int64()
+		conf.expiry, _   = cfg.Section("").Key("expiry").Int64()
+	}
 
 	if verbose {
 		log.Printf("Applied configuration:\n%s", conf)
