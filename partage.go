@@ -41,7 +41,6 @@ var conf struct {
 	expiry   int64
 }
 
-
 func writefile(f *os.File, s io.ReadCloser, contentlength int64) error {
 	buffer := make([]byte, 4096)
 	eof := false
@@ -106,7 +105,7 @@ func writemeta(filename string, expiry int64) error {
 func servetemplate(w http.ResponseWriter, f string, d templatedata) {
 	t, err := template.ParseFiles(conf.templatedir + "/" + f)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -119,8 +118,7 @@ func servetemplate(w http.ResponseWriter, f string, d templatedata) {
 func uploaderPut(w http.ResponseWriter, r *http.Request) {
 	/* limit upload size */
 	if r.ContentLength > conf.maxsize {
-		w.WriteHeader(http.StatusRequestEntityTooLarge)
-		w.Write([]byte("File is too big"))
+		http.Error(w, "File is too big", http.StatusRequestEntityTooLarge)
 	}
 
 	tmp, _ := ioutil.TempFile(conf.filepath, "*"+path.Ext(r.URL.Path))
@@ -132,7 +130,7 @@ func uploaderPut(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 
 	if err = writefile(f, r.Body, r.ContentLength); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err, http.StatusInternalServerError)
 		defer os.Remove(tmp.Name())
 		return
 	}
@@ -149,14 +147,13 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 	links := []string{}
 	for _, h := range r.MultipartForm.File["uck"] {
 		if h.Size > conf.maxsize {
-			w.WriteHeader(http.StatusRequestEntityTooLarge)
-			w.Write([]byte("File is too big"))
+			http.Error(w, "File is too big", http.StatusRequestEntityTooLarge)
 			return
 		}
 
 		post, err := h.Open()
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err, http.StatusInternalServerError)
 			return
 		}
 		defer post.Close()
@@ -164,13 +161,13 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 		tmp, _ := ioutil.TempFile(conf.filepath, "*"+path.Ext(h.Filename))
 		f, err := os.Create(tmp.Name())
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err, http.StatusInternalServerError)
 			return
 		}
 		defer f.Close()
 
 		if err = writefile(f, post, h.Size); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err, http.StatusInternalServerError)
 			defer os.Remove(tmp.Name())
 			return
 		}
