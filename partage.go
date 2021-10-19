@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/fcgi"
 	"os"
 	"os/user"
 	"path"
@@ -357,5 +358,11 @@ func main() {
 		log.Printf("Listening on %s", conf.bind)
 	}
 
-	http.Serve(listener, nil)
+	if listener.Addr().Network() == "unix" {
+		err = fcgi.Serve(listener, nil)
+		log.Fatal(err) /* NOTREACHED */
+	}
+
+	err = http.Serve(listener, nil)
+	log.Fatal(err) /* NOTREACHED */
 }
