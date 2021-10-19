@@ -175,8 +175,7 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 		writemeta(tmp.Name(), conf.expiry)
 
 
-		//link := conf.baseuri + conf.filectx + filepath.Base(tmp.Name())
-		link := conf.baseuri + conf.metactx + filepath.Base(tmp.Name()) + ".json"
+		link := conf.baseuri + conf.filectx + filepath.Base(tmp.Name())
 		links = append(links, link)
 	}
 
@@ -230,6 +229,5 @@ func main() {
 
 	http.HandleFunc("/", uploader)
 	http.Handle(conf.filectx, http.StripPrefix(conf.filectx, http.FileServer(http.Dir(conf.filepath))))
-	http.Handle(conf.metactx, http.StripPrefix(conf.metactx, http.FileServer(http.Dir(conf.metapath))))
 	http.ListenAndServe("0.0.0.0:8080", nil)
 }
