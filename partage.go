@@ -7,9 +7,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/user"
 	"time"
 	"path"
 	"syscall"
+	"strconv"
 	"path/filepath"
 	"html/template"
 	"encoding/json"
@@ -32,6 +34,8 @@ type metadata struct {
 
 var conf struct {
 	bind     string
+	user     string
+	group    string
 	baseuri  string
 	filepath string
 	metapath string
@@ -218,6 +222,8 @@ func uploader(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	flag.StringVar(&conf.bind,        "bind",        "0.0.0.0:8080", "Address to bind to (default: 0.0.0.0:8080)")
+	flag.StringVar(&conf.user,        "user",        "", "User to drop privileges to on startup (default: current user)")
+	flag.StringVar(&conf.group,       "group",       "", "Group to drop privileges to on startup (default: user's group)")
 	flag.StringVar(&conf.baseuri,     "baseuri",     "http://127.0.0.1:8080", "Base URI to use for links (default: http://127.0.0.1:8080)")
 	flag.StringVar(&conf.filepath,    "filepath",    "./files", "Path to save files to (default: ./files)")
 	flag.StringVar(&conf.metapath,    "metapath",    "./meta", "Path to save metadata to (default: ./meta)")
@@ -233,6 +239,29 @@ func main() {
 
 	if (conf.chroot != "") {
 		syscall.Chroot(conf.chroot)
+	}
+
+	if conf.user != "" {
+		u, err := user.Lookup(conf.user)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		uid, _ := strconv.Atoi(u.Uid)
+		gid, _ := strconv.Atoi(u.Gid)
+
+		if conf.group != "" {
+			g, err := user.LookupGroup(conf.group)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			gid, _ = strconv.Atoi(g.Gid)
+		}
+
+		syscall.Setuid(uid)
+		syscall.Setgid(gid)
 	}
 
 	http.HandleFunc("/", uploader)
