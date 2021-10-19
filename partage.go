@@ -148,7 +148,7 @@ func uploaderPut(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 
 	if verbose {
-		log.Printf("Writing %d bytes to %s", r.ContentLength, tmp)
+		log.Printf("Writing %d bytes to %s", r.ContentLength, tmp.Name())
 	}
 
 	if err = writefile(f, r.Body, r.ContentLength); err != nil {
@@ -284,10 +284,6 @@ func main() {
 		conf.tmplpath = cfg.Section("").Key("tmplpath").String()
 		conf.maxsize, _ = cfg.Section("").Key("maxsize").Int64()
 		conf.expiry, _ = cfg.Section("").Key("expiry").Int64()
-	}
-
-	if verbose {
-		log.Printf("Applied configuration:\n%s", conf)
 	}
 
 	if conf.chroot != "" {
