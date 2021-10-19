@@ -3,7 +3,7 @@
 all:V: partage partage-trash/partage-trash
 
 %: %.go
-	$GO build -o $stem
+	$GO build -o $stem $stem.go
 
 clean:V:
 	rm -f partage partage-trash/partage-trash
