@@ -1,52 +1,52 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"flag"
+	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/user"
-	"time"
 	"path"
-	"syscall"
-	"strconv"
 	"path/filepath"
-	"html/template"
-	"encoding/json"
+	"strconv"
+	"syscall"
+	"time"
 
 	"github.com/dustin/go-humanize"
 	"gopkg.in/ini.v1"
 )
 
 type templatedata struct {
-	Links []string
-	Size string
+	Links   []string
+	Size    string
 	Maxsize string
 }
 
 type metadata struct {
 	Filename string
-	Size int64
-	Expiry int64
+	Size     int64
+	Expiry   int64
 }
 
 var conf struct {
-	user        string
-	group       string
-	chroot      string
-	bind        string
-	baseuri     string
-	rootdir     string
-	tmplpath    string
-	filepath    string
-	metapath    string
-	filectx     string
-	metactx     string
-	maxsize     int64
-	expiry      int64
+	user     string
+	group    string
+	chroot   string
+	bind     string
+	baseuri  string
+	rootdir  string
+	tmplpath string
+	filepath string
+	metapath string
+	filectx  string
+	metactx  string
+	maxsize  int64
+	expiry   int64
 }
 
 var verbose bool
@@ -92,12 +92,12 @@ func writemeta(filename string, expiry int64) error {
 
 	meta := metadata{
 		Filename: filepath.Base(filename),
-		Size: size,
-		Expiry: time.Now().Unix() + expiry,
+		Size:     size,
+		Expiry:   time.Now().Unix() + expiry,
 	}
 
 	if verbose {
-		log.Printf("Saving metadata for %s in %s", meta.Filename, conf.metapath + "/" + meta.Filename + ".json")
+		log.Printf("Saving metadata for %s in %s", meta.Filename, conf.metapath+"/"+meta.Filename+".json")
 	}
 
 	f, err := os.Create(conf.metapath + "/" + meta.Filename + ".json")
@@ -196,13 +196,12 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 
 		writemeta(tmp.Name(), conf.expiry)
 
-
 		link := conf.baseuri + conf.filectx + filepath.Base(tmp.Name())
 		links = append(links, link)
 	}
 
-	if (r.PostFormValue("output") == "html") {
-		data := templatedata{ Links: links }
+	if r.PostFormValue("output") == "html" {
+		data := templatedata{Links: links}
 		servetemplate(w, "/upload.html", data)
 		return
 	} else {
@@ -216,16 +215,16 @@ func uploaderGet(w http.ResponseWriter, r *http.Request) {
 	// r.URL.Path is sanitized regarding "." and ".."
 	filename := r.URL.Path
 	if r.URL.Path == "/" || r.URL.Path == "/index.html" {
-		data := templatedata{ Maxsize: humanize.IBytes(uint64(conf.maxsize))}
+		data := templatedata{Maxsize: humanize.IBytes(uint64(conf.maxsize))}
 		servetemplate(w, "/index.html", data)
 		return
 	}
 
 	if verbose {
-		log.Printf("Serving file %s", conf.rootdir + filename)
+		log.Printf("Serving file %s", conf.rootdir+filename)
 	}
 
-	http.ServeFile(w, r, conf.rootdir + filename)
+	http.ServeFile(w, r, conf.rootdir+filename)
 }
 
 func uploader(w http.ResponseWriter, r *http.Request) {
@@ -245,21 +244,21 @@ func uploader(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	var file string
-	flag.StringVar(&file,  "f", "", "Configuration file")
+	flag.StringVar(&file, "f", "", "Configuration file")
 	flag.BoolVar(&verbose, "v", false, "Verbose logging")
 	flag.Parse()
 
 	/* default values */
-	conf.bind     = "0.0.0.0:8080"
-	conf.baseuri  = "http://127.0.0.1:8080"
-	conf.rootdir  = "/htdocs"
+	conf.bind = "0.0.0.0:8080"
+	conf.baseuri = "http://127.0.0.1:8080"
+	conf.rootdir = "/htdocs"
 	conf.tmplpath = "/htdocs/templates"
 	conf.filepath = "/htdocs/files"
 	conf.metapath = "/htdocs/meta"
-	conf.filectx  = "/f/"
-	conf.metactx  = "/m/"
-	conf.maxsize  = 34359738368
-	conf.expiry   = 86400
+	conf.filectx = "/f/"
+	conf.metactx = "/m/"
+	conf.maxsize = 34359738368
+	conf.expiry = 86400
 
 	if file != "" {
 		if verbose {
@@ -272,26 +271,26 @@ func main() {
 			return
 		}
 
-		conf.bind        = cfg.Section("").Key("bind").String()
-		conf.user        = cfg.Section("").Key("user").String()
-		conf.group       = cfg.Section("").Key("group").String()
-		conf.baseuri     = cfg.Section("").Key("baseuri").String()
-		conf.filepath    = cfg.Section("").Key("filepath").String()
-		conf.metapath    = cfg.Section("").Key("metapath").String()
-		conf.filectx     = cfg.Section("").Key("filectx").String()
-		conf.metactx     = cfg.Section("").Key("metactx").String()
-		conf.rootdir     = cfg.Section("").Key("rootdir").String()
-		conf.chroot      = cfg.Section("").Key("chroot").String()
-		conf.tmplpath    = cfg.Section("").Key("tmplpath").String()
-		conf.maxsize, _  = cfg.Section("").Key("maxsize").Int64()
-		conf.expiry, _   = cfg.Section("").Key("expiry").Int64()
+		conf.bind = cfg.Section("").Key("bind").String()
+		conf.user = cfg.Section("").Key("user").String()
+		conf.group = cfg.Section("").Key("group").String()
+		conf.baseuri = cfg.Section("").Key("baseuri").String()
+		conf.filepath = cfg.Section("").Key("filepath").String()
+		conf.metapath = cfg.Section("").Key("metapath").String()
+		conf.filectx = cfg.Section("").Key("filectx").String()
+		conf.metactx = cfg.Section("").Key("metactx").String()
+		conf.rootdir = cfg.Section("").Key("rootdir").String()
+		conf.chroot = cfg.Section("").Key("chroot").String()
+		conf.tmplpath = cfg.Section("").Key("tmplpath").String()
+		conf.maxsize, _ = cfg.Section("").Key("maxsize").Int64()
+		conf.expiry, _ = cfg.Section("").Key("expiry").Int64()
 	}
 
 	if verbose {
 		log.Printf("Applied configuration:\n%s", conf)
 	}
 
-	if (conf.chroot != "") {
+	if conf.chroot != "" {
 		if verbose {
 			log.Printf("Changing root to %s", conf.chroot)
 		}
