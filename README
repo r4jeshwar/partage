@@ -1,0 +1,58 @@
+partage
+=======
+
+File upload system based on HTTP.
+
+Features
+--------
++ Simple web interface
++ Link expiration
++ Mimetype support
++ Random filnames
++ Multiple file uploads
++ Privilege dropping
++ `chroot(2)`-ed
+
+Usage
+-----
+Refer to the partage(1) manual page for details and examples.
+
+	partage [-v] [-f partage.conf]
+
+Configuration is done from its configuration file, partage.conf(5).
+The format is that of the INI file format.
+
+The following configuration will accept connections via fastcgi over
+UNIX sockets. On startup the server will chroot into /var/www, and drop
+privileges to the www:daemon user:
+
+	bind   = unix:/tmp/partage.sock
+	chroot = /var/www
+	user   = www
+	group  = daemon
+	maxsize = 2147483648 # 2 Gib
+
+Configuration
+-------------
+In order for the web interface to work, the server needs access to 2
+template files, which must be location specified by the `tmplpath`
+variable:
+
+- index.html
+- upload.html
+
+Interface
+---------
+Files are sent to the server using PUT and POST requests.
+Using POST requests, one can set the expiration time by sending the
+"expiry" parameter (in seconds).
+
+	curl -X PUT -T file.png http://domain.tld
+	curl -X POST -Fuck=file.png -Fexpiry=3600 http://domain.tld
+
+Installation
+------------
+Edit the `config.mk` file to match your setup, then run the following:
+
+        $ mk
+        # mk install
