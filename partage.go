@@ -203,11 +203,14 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 		links = append(links, link)
 	}
 
-	if r.PostFormValue("output") == "html" {
+	switch r.PostFormValue("output") {
+	case "html":
 		data := templatedata{Links: links}
 		servetemplate(w, "/upload.html", data)
-		return
-	} else {
+	case "json":
+		data, _ := json.Marshal(links)
+		w.Write(data)
+	default:
 		for _, link := range links {
 			w.Write([]byte(link + "\r\n"))
 		}
