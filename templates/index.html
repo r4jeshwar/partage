@@ -14,14 +14,26 @@
 		<img id="logo" src="/partage.png" />
 		<h1>partage</h1>
 	</header>
-	<p>
-		Use the box below to upload and share files. File size is
-		limited to {{.Maxsize}}.
-	</p>
 	<form enctype="multipart/form-data" method="post">
-		<input id="uck" name="uck" type="file" multiple/>
-		<input id="output" name="output" type="hidden" value='html' />
-		<input type="submit" value="...Share"/>
+		<div id="dropzone"></div>
+		<div id="fallbackform" class="dropzone">
+			<input id="filebox" name="file" type="file" multiple/>
+			<input id="output" name="output" type="hidden" value='html' />
+			<input type="submit" value="Upload"/>
+		</div>
+		<section id="formsettings">
+			<label for="expiry"> Destroy after </label>
+			<select id="expiry" name="expiry">
+		                <option value="900"> 15 minutes </option>
+		                <option value="3600"> 1 hour </option>
+		                <option value="28800"> 8 hours </option>
+		                <option value="86400" selected> 1 day </option>
+		                <option value="604800"> 1 week </option>
+			</select>
+		</section>
 	</form>
+	<p>File size limited to {{.Maxsize}}.</p>
+	<div id="uploads"></div>
+	<script src="/dz.js"></script>
 </body>
 </html>

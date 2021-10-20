@@ -2,9 +2,9 @@ body {
 	padding: 5%;
 	margin: auto;
 	max-width: 540px;
-	text-align: center;
 	font-family: serif;
 	font-size: 1.5rem;
+	text-align: center;
 	background-color: #eeeeee;
 	color: #222222;
 }
@@ -17,10 +17,46 @@ header {
 	align-content: center;
 }
 
+section {
+	display: flex;
+	justify-content: flex-end;
+	font-size: initial;
+}
 
-img#logo { height: 100%; max-height: 30vh; }
-h1 { font-size: 4.5rem; }
-ul { list-style: none; padding: 0; }
+section#formsettings > * {
+	margin-top: 20px;
+	margin-left: 20px;
+}
+
+img#logo {
+	height: 100%;
+	max-height: 30vh;
+}
+
+h1 {
+	font-size: 4.0rem;
+}
+
+ul {
+	list-style: none;
+	text-align: left;
+	display: inline-block;
+}
+
+.dropzone {
+	padding-top: 60px;
+	padding-bottom: 60px;
+	border: 2px dashed #888888;
+	border-radius: 8px;
+	text-align: center;
+	margin: auto;
+	color: #888888;
+}
+
+.dropzone.dragover {
+	color: #222222;
+	border-color: #222222;
+}
 
 /* font attributes are not inherited by default */
 input, input::file-selector-button {
@@ -56,4 +92,3 @@ input, input::file-selector-button {
 		background-color: #222222;
 	}
 }
-
