@@ -170,7 +170,7 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(32 << 20)
 
 	links := []string{}
-	for _, h := range r.MultipartForm.File["uck"] {
+	for _, h := range r.MultipartForm.File["file"] {
 		if h.Size > conf.maxsize {
 			http.Error(w, "File is too big", http.StatusRequestEntityTooLarge)
 			return
