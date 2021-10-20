@@ -299,10 +299,10 @@ func main() {
 	/* default values */
 	conf.bind = "0.0.0.0:8080"
 	conf.baseuri = "http://127.0.0.1:8080"
-	conf.rootdir = "/htdocs"
-	conf.tmplpath = "/htdocs/templates"
-	conf.filepath = "/htdocs/files"
-	conf.metapath = "/htdocs/meta"
+	conf.rootdir = "static"
+	conf.tmplpath = "templates"
+	conf.filepath = "files"
+	conf.metapath = "meta"
 	conf.filectx = "/f/"
 	conf.metactx = "/m/"
 	conf.maxsize = 34359738368
