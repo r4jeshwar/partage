@@ -66,7 +66,10 @@ function sendfiles(files) {
         // e.loaded - how many bytes downloaded
         // e.lengthComputable = true if the server sent Content-Length header
         // e.total - total number of bytes (if lengthComputable)
-
+	if (e.lengthComputable) {
+		progressbar.max = e.total
+	}
+	progressbar.value = e.loaded
     }
 
     xhr.onreadystatechange = function() {
