@@ -1,14 +1,16 @@
 partage
 =======
-File upload system based on HTTP.
+HTTP based File upload system.
+
+![screenshot](https://z3bra.org/partage/screenshot.png)
 
 Features
 --------
-+ No javascript needed!
 + Link expiration
 + Mimetype support
 + Random filenames
 + Multiple file uploads
++ Javascript not needed
 + Privilege drop
 + chroot(2) support
 + FastCGI support
