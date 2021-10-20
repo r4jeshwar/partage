@@ -204,8 +204,11 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 
 	switch r.PostFormValue("output") {
 	case "html":
-		data := templatedata{Links: links}
-		servetemplate(w, "/upload.html", data)
+		data := templatedata{
+			Maxsize: humanize.IBytes(uint64(conf.maxsize)),
+			Links: links,
+		}
+		servetemplate(w, "/index.html", data)
 	case "json":
 		data, _ := json.Marshal(links)
 		w.Write(data)

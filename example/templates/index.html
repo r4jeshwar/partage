@@ -33,7 +33,10 @@
 		</section>
 	</form>
 	<p>File size limited to {{.Maxsize}}.</p>
-	<div id="uploads"></div>
-	<script src="/dz.js"></script>
+	<div id="uploads">{{if .Links}}
+		<ul>
+	        {{range .Links}}<li><a href="{{.}}">{{.}}</a></li>{{end}}
+		</ul>
+        {{end}}</div>
 </body>
 </html>
