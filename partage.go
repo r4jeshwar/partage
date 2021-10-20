@@ -40,7 +40,7 @@ var conf struct {
 	user     string
 	group    string
 	chroot   string
-	bind     string
+	listen     string
 	baseuri  string
 	rootdir  string
 	tmplpath string
@@ -254,7 +254,7 @@ func parseconfig(file string) error {
 		return err
 	}
 
-	conf.bind = cfg.Section("").Key("bind").String()
+	conf.listen = cfg.Section("").Key("listen").String()
 	conf.user = cfg.Section("").Key("user").String()
 	conf.group = cfg.Section("").Key("group").String()
 	conf.baseuri = cfg.Section("").Key("baseuri").String()
@@ -297,7 +297,7 @@ func main() {
 	var listener net.Listener
 
 	/* default values */
-	conf.bind = "0.0.0.0:8080"
+	conf.listen = "0.0.0.0:8080"
 	conf.baseuri = "http://127.0.0.1:8080"
 	conf.rootdir = "static"
 	conf.tmplpath = "templates"
@@ -326,23 +326,23 @@ func main() {
 		syscall.Chroot(conf.chroot)
 	}
 
-	if conf.bind[0] == '/' {
-		listener, err = net.Listen("unix", conf.bind)
+	if conf.listen[0] == '/' {
+		listener, err = net.Listen("unix", conf.listen)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		/* Ensure unix socket is removed on exit */
-		defer os.Remove(conf.bind)
+		defer os.Remove(conf.listen)
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 		go func() {
 			_ = <-sigs
-			os.Remove(conf.bind)
+			os.Remove(conf.listen)
 			os.Exit(0)
 		}()
 	} else {
-		listener, err = net.Listen("tcp", conf.bind)
+		listener, err = net.Listen("tcp", conf.listen)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -358,7 +358,7 @@ func main() {
 		}
 
 		if listener.Addr().Network() == "unix" {
-			os.Chown(conf.bind, uid, gid)
+			os.Chown(conf.listen, uid, gid)
 		}
 
 		syscall.Setuid(uid)
@@ -369,7 +369,7 @@ func main() {
 	http.Handle(conf.filectx, http.StripPrefix(conf.filectx, http.FileServer(http.Dir(conf.filepath))))
 
 	if verbose {
-		log.Printf("Listening on %s", conf.bind)
+		log.Printf("Listening on %s", conf.listen)
 	}
 
 	if listener.Addr().Network() == "unix" {
