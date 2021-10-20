@@ -47,7 +47,6 @@ var conf struct {
 	filepath string
 	metapath string
 	filectx  string
-	metactx  string
 	maxsize  int64
 	expiry   int64
 }
@@ -261,7 +260,6 @@ func parseconfig(file string) error {
 	conf.filepath = cfg.Section("").Key("filepath").String()
 	conf.metapath = cfg.Section("").Key("metapath").String()
 	conf.filectx = cfg.Section("").Key("filectx").String()
-	conf.metactx = cfg.Section("").Key("metactx").String()
 	conf.rootdir = cfg.Section("").Key("rootdir").String()
 	conf.chroot = cfg.Section("").Key("chroot").String()
 	conf.tmplpath = cfg.Section("").Key("tmplpath").String()
@@ -304,7 +302,6 @@ func main() {
 	conf.filepath = "files"
 	conf.metapath = "meta"
 	conf.filectx = "/f/"
-	conf.metactx = "/m/"
 	conf.maxsize = 34359738368
 	conf.expiry = 86400
 
