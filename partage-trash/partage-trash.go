@@ -46,6 +46,9 @@ func checkexpiry(path string, info os.FileInfo, err error) error {
 		return nil
 	}
 	meta, err := readmeta(path)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	now := time.Now().Unix()
 
