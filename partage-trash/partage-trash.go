@@ -24,6 +24,7 @@ var conf struct {
 
 var verbose bool
 var count int64
+var deleted int64
 var size int64
 
 func readmeta(filename string) (metadata, error) {
@@ -52,16 +53,22 @@ func checkexpiry(path string, info os.FileInfo, err error) error {
 
 	now := time.Now().Unix()
 
+	count++
+
 	if meta.Expiry > 0 && now >= meta.Expiry {
 		if verbose {
 			expiration :=  humanize.Time(time.Unix(meta.Expiry, 0))
-			log.Printf("%s/%s expired %s\n", conf.filepath, meta.Filename, expiration)
+			log.Printf("%s/%s: expired %s\n", conf.filepath, meta.Filename, expiration)
 		}
 		os.Remove(conf.filepath + "/" + meta.Filename)
 		os.Remove(path)
+		deleted++
 		return nil
 	} else {
-		count++
+		if verbose {
+			expiration :=  humanize.Time(time.Unix(meta.Expiry, 0))
+			log.Printf("%s/%s: expire %s\n", conf.filepath, meta.Filename, expiration)
+		}
 		size += meta.Size
 	}
 
@@ -81,6 +88,6 @@ func main() {
 	}
 
 	if verbose && count > 0 {
-		log.Printf("%d file(s) remain on disk (total: %s)", count, humanize.IBytes(uint64(size)))
+		log.Printf("%d/%d file(s) deleted (remaining: %s)", deleted, count, humanize.IBytes(uint64(size)))
 	}
 }
