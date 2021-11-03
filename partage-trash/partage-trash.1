@@ -1,0 +1,41 @@
+.Dd 2021-11-03
+.Dt PARTAGE-TRASH 1
+.Os POSIX.1-2017
+.Sh NAME
+.Nm partage-trash
+.Nd Purge expired share files
+.Sh SYNOPSIS
+.Nm partage-trash
+.Op Fl v
+.Op Fl f Ar files
+.Op Fl m Ar metadata
+.Sh DESCRIPTION
+Upon each run,
+.Nm
+will check expiration times for files in the
+.Pa metadata
+directory, and delete the according file in the 
+.Pa files
+directory if the expiration time has passed.
+.Pp
+.Nm
+is best run as a
+.Xr cron 8
+job, as the same user as the
+.Xr partage 1
+daemon.
+.Bl -tag -width Ds
+.It Fl v
+Turn on verbose logging to
+.Pa stderr
+.It Fl f Ar files
+Set the location of actual files to
+.Pa files
+.It Fl m Ar metadata
+Lookup metadata files in directory
+.Pa metadata
+.El
+.Sh SEE ALSO
+.Xr partage 1
+.Sh AUTHOR
+.An Willy Goiffon Aq Mt dev@z3bra.org
