@@ -37,10 +37,22 @@ h1 {
 	font-size: 4.0rem;
 }
 
-ul {
+#uploads {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+#uploads > ul {
 	list-style: none;
 	text-align: left;
-	display: inline-block;
+	padding: 0;
+}
+
+#uploads > button {
+	align-self: flex-end;
+	margin-right: 10%;
 }
 
 .dropzone {
