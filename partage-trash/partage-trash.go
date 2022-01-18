@@ -51,23 +51,31 @@ func checkexpiry(path string, info os.FileInfo, err error) error {
 		log.Fatal(err)
 	}
 
-	now := time.Now().Unix()
 
 	count++
+
+	now := time.Now().Unix()
+	if verbose {
+		log.Printf("now: %s, expiry: %s\n", now, meta.Expiry);
+	}
 
 	if meta.Expiry > 0 && now >= meta.Expiry {
 		if verbose {
 			expiration :=  humanize.Time(time.Unix(meta.Expiry, 0))
 			log.Printf("%s/%s: expired %s\n", conf.filepath, meta.Filename, expiration)
 		}
-		os.Remove(conf.filepath + "/" + meta.Filename)
-		os.Remove(path)
+		if err = os.Remove(conf.filepath + "/" + meta.Filename); err != nil {
+			log.Fatal(err)
+		}
+		if err = os.Remove(path); err != nil {
+			log.Fatal(err)
+		}
 		deleted++
 		return nil
 	} else {
 		if verbose {
 			expiration :=  humanize.Time(time.Unix(meta.Expiry, 0))
-			log.Printf("%s/%s: expire %s\n", conf.filepath, meta.Filename, expiration)
+			log.Printf("%s/%s: expire in %s\n", conf.filepath, meta.Filename, expiration)
 		}
 		size += meta.Size
 	}
