@@ -1,0 +1,33 @@
+.Dd 2021-11-03
+.Dt PARTAGE 1
+.Os POSIX.1-2017
+.Sh NAME
+.Nm partage
+.Nd HTTP based file upload system
+.Sh SYNOPSIS
+.Nm partage
+.Op Fl v
+.Op Fl f Ar file
+.Sh DESCRIPTION
+.Nm
+is an HTTP server that permits temporary file uploads using PUT and
+POST requests.
+.Pp
+Files uploaded are saved in a single directory and given random names
+while retaining their original extension.
+A configurable expiration time is set for each file, that can be used
+to cleanup expired files thanks to
+.Xr partage-trash 1 .
+.Bl -tag -width Ds
+.It Fl v
+Turn on verbose logging to
+.Pa stderr
+.It Fl f Ar file
+Load configuration from
+.Pa file
+.El
+.Sh SEE ALSO
+.Xr partage-trash 1 ,
+.Xr partage.conf 5
+.Sh AUTHOR
+.An Willy Goiffon Aq Mt dev@z3bra.org

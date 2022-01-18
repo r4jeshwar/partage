@@ -1,0 +1,91 @@
+.Dd 2021-11-03
+.Dt PARTAGE.CONF 5
+.Os POSIX.1-2017
+.Sh NAME
+.Nm partage.conf
+.Nd partage configuration file format
+.Sh DESCRIPTION
+.Nm
+is the configuration file for the HTTP file sharing system,
+.Xr partage 1 .
+.Sh CONFIGURATION
+Here are the settings that can be set:
+.Bl -tag -width Ds
+.It Ic listen Ar socket
+Have the program listen on
+.Ar socket .
+This socket can be specified either as a TCP socket:
+.Ar host:port
+or as a Unix socket:
+.Ar /path/to/partage.sock .
+When using Unix sockets, the program will serve content using the
+.Em FastCGI
+protocol.
+.It Ic user Ar user
+Username that the program will drop privileges to upon startup. When
+using Unix sockets, the owner of the socket will be changed to this user.
+.It Ic group Ar group
+Group that the program will drop privileges to upon startup (require that
+.Ic user
+is set). When using Unix sockets, the owner group of the socket will be
+changed to this group.
+.It Ic chroot Pa dir
+Directory to chroot into upon startup. When specified, all other path
+must be set within the chroot directory.
+.It Ic baseuri Ar uri
+Base URI to use when constructing hyper links.
+.It Ic rootdir Pa dir
+Directory containing static files.
+.It Ic tmplpath Pa dir
+Directory containing template files.
+.It Ic filepath Pa dir
+Directory where uploaded files must be written to.
+.It Ic metapath Pa dir
+Directory where metadata for uploaded files will be saved.
+.It Ic filectx Pa context
+URI context to use for serving files.
+.It Ic maxsize Ar size
+Maximum size per file to accept for uploads.
+.It Ic expiry Ar time
+Default expiration time to set for uploads.
+.El
+.Sh EXAMPLE
+Configuration suitable for use with
+.Xr httpd 8
+using fastcgi:
+.Bd -literal -offset indent
+listen      = /run/partage.sock
+baseuri     = https://domain.tld
+user        = www
+group       = daemon
+chroot      = /var/www
+rootdir     = /htdocs/static
+filepath    = /htdocs/files
+metapath    = /htdocs/meta
+tmplpath    = /htdocs/templates
+filectx     = /d/
+maxsize     = 10737418240 # 10 Gib
+expiry      = 86400       # 24 hours
+.Ed
+
+Mathing
+.Xr httpd.conf 5
+configuration:
+.Bd -literal -offset indent
+server "domain.tld" {
+	listen on * tls port 443
+	connection { max request body 10737418240 }
+	location "*" {
+		fastcgi socket "/run/partage.sock"
+	}
+}
+types { include "/usr/share/misc/mime.types" }
+.Ed
+
+.Sh SEE ALSO
+.Xr partage 1 ,
+.Xr partage-trash 1 ,
+.Xr httpd 8,
+.Xr httpd.conf 5
+.Sh AUTHORS
+.An Willy Goiffon Aq Mt dev@z3bra.org

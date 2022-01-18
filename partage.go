@@ -92,6 +92,10 @@ func writemeta(filename string, expiry int64) error {
 	size := stat.Size()
 	f.Close()
 
+	if expiry < 0 {
+		expiry = conf.expiry
+	}
+
 	meta := metadata{
 		Filename: filepath.Base(filename),
 		Size:     size,
@@ -196,7 +200,11 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		writemeta(tmp.Name(), conf.expiry)
+		expiry, err := strconv.Atoi(r.PostFormValue("expiry"))
+		if err != nil || expiry < 0 {
+			expiry = int(conf.expiry)
+		}
+		writemeta(tmp.Name(), int64(expiry))
 
 		link := conf.baseuri + conf.filectx + filepath.Base(tmp.Name())
 		links = append(links, link)
