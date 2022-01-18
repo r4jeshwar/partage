@@ -327,25 +327,33 @@ func main() {
 	}
 
 	if conf.listen[0] == '/' {
-		listener, err = net.Listen("unix", conf.listen)
-		if err != nil {
+		/* Remove any stale socket */
+		os.Remove(conf.listen)
+		if listener, err = net.Listen("unix", conf.listen); err != nil {
 			log.Fatal(err)
 		}
+		defer listener.Close()
 
-		/* Ensure unix socket is removed on exit */
+		/*
+		 * Ensure unix socket is removed on exit.
+		 * Note: this might not work when dropping privileges…
+		 */
 		defer os.Remove(conf.listen)
 		sigs := make(chan os.Signal, 1)
-		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		signal.Notify(sigs, os.Interrupt, os.Kill, syscall.SIGTERM)
 		go func() {
 			_ = <-sigs
-			os.Remove(conf.listen)
+			listener.Close()
+			if err = os.Remove(conf.listen); err != nil {
+				log.Fatal(err)
+			}
 			os.Exit(0)
 		}()
 	} else {
-		listener, err = net.Listen("tcp", conf.listen)
-		if err != nil {
+		if listener, err = net.Listen("tcp", conf.listen); err != nil {
 			log.Fatal(err)
 		}
+		defer listener.Close()
 	}
 
 	if conf.user != "" {
