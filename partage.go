@@ -40,7 +40,7 @@ var conf struct {
 	user     string
 	group    string
 	chroot   string
-	listen     string
+	listen   string
 	baseuri  string
 	rootdir  string
 	tmplpath string
@@ -214,7 +214,7 @@ func uploaderPost(w http.ResponseWriter, r *http.Request) {
 	case "html":
 		data := templatedata{
 			Maxsize: humanize.IBytes(uint64(conf.maxsize)),
-			Links: links,
+			Links:   links,
 		}
 		servetemplate(w, "/index.html", data)
 	case "json":
