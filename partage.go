@@ -243,12 +243,35 @@ func uploaderGet(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, conf.rootdir+filename)
 }
 
+func uploaderDelete(w http.ResponseWriter, r *http.Request) {
+	// r.URL.Path is sanitized regarding "." and ".."
+	filename := r.URL.Path
+	filepath := conf.filepath + filename
+
+	if verbose {
+		log.Printf("Deleting file %s", filepath)
+	}
+
+	f, err := os.Open(filepath)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	f.Close()
+
+	// Force file expiration
+	writemeta(filepath, 0)
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func uploader(w http.ResponseWriter, r *http.Request) {
 	if verbose {
 		log.Printf("%s: <%s> %s %s %s", r.Host, r.RemoteAddr, r.Method, r.RequestURI, r.Proto)
 	}
 
 	switch r.Method {
+	case "DELETE":
+		uploaderDelete(w, r)
 	case "POST":
 		uploaderPost(w, r)
 	case "PUT":
