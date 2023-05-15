@@ -47,7 +47,7 @@ jobs:
         id: deploy-apprunner
         uses: awslabs/amazon-app-runner-deploy@main        
         with:
-          service: app-runner-image-deploy-service
+          service: partage-app-runner
           image: ${{ steps.build-image.outputs.image }}          
           access-role-arn: ${{ secrets.ROLE_ARN }}       
           region: ${{ secrets.AWS_REGION }}
@@ -62,36 +62,36 @@ jobs:
       - name: Delete file 
         run: rm -f Dockerfile
         
-#       - name: Replace the URL
-#         run: sed -i "s/0.0.0.0:9000/${{ steps.deploy-apprunner.outputs.service-url }}"/g" example/partage.conf
+      - name: Replace the URL
+        run: sed -i "s/0.0.0.0:9000/${{ steps.deploy-apprunner.outputs.service-url }}"/g" example/partage.conf
         
-#       - name: Rename file
-#         run: mv dockerfile-partage Dockerfile
+      - name: Rename file
+        run: mv dockerfile-partage Dockerfile
         
-#       - name: Login to Amazon ECR
-#         id: login-aws-ecr
-#         uses: aws-actions/amazon-ecr-login@v1        
+      - name: Login to Amazon ECR
+        id: login-aws-ecr
+        uses: aws-actions/amazon-ecr-login@v1        
 
-#       - name: Build, tag, and push image to Amazon ECR
-#         id: build-docker-image
-#         env:
-#           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-#           ECR_REPOSITORY: partage
-#           IMAGE_TAG: ${{ github.sha }}
-#         run: |
-#           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-#           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-#           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"  
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-docker-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: partage
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"  
           
-#       - name: Deploy to App Runner
-#         id: deploy-aws-apprunner
-#         uses: awslabs/amazon-app-runner-deploy@main        
-#         with:
-#           service: app-runner-image-deploy-service
-#           image: ${{ steps.build-image.outputs.image }}          
-#           access-role-arn: ${{ secrets.ROLE_ARN }}       
-#           region: ${{ secrets.AWS_REGION }}
-#           cpu : 1
-#           memory : 2
-#           port: 9000
-#           wait-for-service-stability: true
+      - name: Deploy to App Runner
+        id: deploy-aws-apprunner
+        uses: awslabs/amazon-app-runner-deploy@main        
+        with:
+          service: partage-app-runner
+          image: ${{ steps.build-image.outputs.image }}          
+          access-role-arn: ${{ secrets.ROLE_ARN }}       
+          region: ${{ secrets.AWS_REGION }}
+          cpu : 1
+          memory : 2
+          port: 9000
+          wait-for-service-stability: true
