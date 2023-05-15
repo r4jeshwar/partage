@@ -21,6 +21,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          
+      - name: Rename file 
+        run: mv dockerfile-nginx Dockerfile
+        
+      - name: Replace the URL
+        run: sed -i "s/127.0.0.1:9000/0.0.0.0:9000/g" example/partage.conf
 
       - name: Login to Amazon ECR
         id: login-ecr
