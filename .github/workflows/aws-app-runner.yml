@@ -7,10 +7,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     
-    steps:  
-      - name: Replace the URL
-        run: sed -i "s/127.0.0.1:9000/0.0.0.0:9000/g" example/partage.conf
-        
+    steps:          
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -27,6 +24,9 @@ jobs:
           
       - name: Rename file 
         run: mv dockerfile-nginx Dockerfile
+        
+      - name: Replace the URL
+        run: sed -i "s/127.0.0.1:9000/0.0.0.0:9000/g" example/partage.conf
 
       - name: Login to Amazon ECR
         id: login-ecr
