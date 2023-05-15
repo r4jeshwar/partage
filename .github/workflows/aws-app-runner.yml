@@ -24,6 +24,9 @@ jobs:
           
       - name: Rename file 
         run: mv dockerfile-nginx Dockerfile
+        
+      - name: Replace the URL
+        run: sed -i "s/127.0.0.1:9000/0.0.0.0:9000/g" partage/example/partage.conf
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -53,5 +56,42 @@ jobs:
           port: 9000
           wait-for-service-stability: true
       
-      - name: App Runner output
-        run: echo "App runner output ${{ steps.deploy-apprunner.outputs.service-id }}" 
+      - name: App Runner URL
+        run: echo "App runner URL ${{ steps.deploy-apprunner.outputs.service-url }}"
+        
+      - name: Delete file 
+        run: rm -f Dockerfile
+        
+      - name: Replace the URL
+        run: sed -i "s/0.0.0.0:9000/${{ steps.deploy-apprunner.outputs.service-url }}"/g" partage/example/partage.conf
+        
+      - name: Rename file
+        run: mv dockerfile-partage Dockerfile
+        
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1        
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: partage
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"  
+          
+      - name: Deploy to App Runner
+        id: deploy-apprunner
+        uses: awslabs/amazon-app-runner-deploy@main        
+        with:
+          service: app-runner-image-deploy-service
+          image: ${{ steps.build-image.outputs.image }}          
+          access-role-arn: ${{ secrets.ROLE_ARN }}       
+          region: ${{ secrets.AWS_REGION }}
+          cpu : 1
+          memory : 2
+          port: 9000
+          wait-for-service-stability: true
