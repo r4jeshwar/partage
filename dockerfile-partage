@@ -24,7 +24,7 @@ RUN cd partage && \
     go install
 
 RUN sed -i "s/}/}\`/g" partage/config.mk && \
-    sed -i "s/127.0.0.1:9000/0.0.0.0:9000/g" partage/example/partage.conf
+#    sed -i "s/127.0.0.1:9000/0.0.0.0:9000/g" partage/example/partage.conf
 
 RUN mkdir -p partage/example/files && \
     mkdir -p partage/example/meta && \
