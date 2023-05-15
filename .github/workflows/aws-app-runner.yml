@@ -69,11 +69,11 @@ jobs:
         run: mv dockerfile-partage Dockerfile
         
       - name: Login to Amazon ECR
-        id: login-ecr
+        id: login-aws-ecr
         uses: aws-actions/amazon-ecr-login@v1        
 
       - name: Build, tag, and push image to Amazon ECR
-        id: build-image
+        id: build-docker-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: partage
@@ -84,7 +84,7 @@ jobs:
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"  
           
       - name: Deploy to App Runner
-        id: deploy-apprunner
+        id: deploy-aws-apprunner
         uses: awslabs/amazon-app-runner-deploy@main        
         with:
           service: app-runner-image-deploy-service
