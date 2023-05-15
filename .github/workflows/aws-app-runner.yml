@@ -26,7 +26,7 @@ jobs:
         run: mv dockerfile-nginx Dockerfile
         
       - name: Replace the URL
-        run: sed -i "s/127.0.0.1:9000/0.0.0.0:9000/g" partage/example/partage.conf
+        run: sed -i "s/127.0.0.1:9000/0.0.0.0:9000/g" example/partage.conf
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -63,7 +63,7 @@ jobs:
         run: rm -f Dockerfile
         
       - name: Replace the URL
-        run: sed -i "s/0.0.0.0:9000/${{ steps.deploy-apprunner.outputs.service-url }}"/g" partage/example/partage.conf
+        run: sed -i "s/0.0.0.0:9000/${{ steps.deploy-apprunner.outputs.service-url }}"/g" example/partage.conf
         
       - name: Rename file
         run: mv dockerfile-partage Dockerfile
